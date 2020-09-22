@@ -6,16 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\User;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login','create']]);
+        $this->middleware('auth:api', ['except' => ['login','signin']]);
     }
 
-    public function create(Request $req)
+    public function signin(Request $req)
     {
         $validatedData = $req->validate(
             [
@@ -27,20 +28,22 @@ class AuthController extends Controller
             'birthdate' => 'required|date',
              ]);
 
-
         /*
             $req->gender == 1 :: this is man
             $req->gender == 2 :: this is woman
             $req->gender == !1 || !2 :: wrong data
         */
         $flag = 1 ;
+
         if($req->gender == 1 || $req->gender == 2 )    {  $flag = 1 ;  }
 
         else {$flag = 0 ; echo "please enter Correct Gender" ; }
 
         if ($flag == 1)
          {
-            User::create( $req->all() ) ;
+
+
+            User::create( $req->all()  ) ;
             return "Check your email inbox for verification link" ;
          }
     }
