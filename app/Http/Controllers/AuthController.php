@@ -53,6 +53,14 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $validatedData = $request->validate(
+            [
+
+            'email' => 'required|email:rfc,dns|unique:users',
+            'password' => 'required|min:8',
+
+             ]);
+
         $credentials = $request->only('email', 'password');
          if ($token = $this->guard()->attempt($credentials)) {
             return $this->respondWithToken($token);
@@ -60,6 +68,7 @@ class AuthController extends Controller
 
         echo ($request->email." not Exist plz enter Correct E-mail");
         echo "\n";
+
         Mail::to($request->email)->send(new MailtrapExample());
         echo "Hello ".$request->email." please see your inbox \n ";
         return response()->json(['error' => 'Unauthorized'], 401);
