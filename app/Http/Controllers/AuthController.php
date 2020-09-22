@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Mail\MailtrapExample;
 use App\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -52,11 +54,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
-        // echo (bcrypt('password'));
-        if ($token = $this->guard()->attempt($credentials)) {
+         if ($token = $this->guard()->attempt($credentials)) {
             return $this->respondWithToken($token);
         }
 
+        echo ($request->email." not Exist plz enter Correct E-mail");
+        echo "\n";
+        Mail::to($request->email)->send(new MailtrapExample());
+        echo "Hello ".$request->email." please see your inbox \n ";
         return response()->json(['error' => 'Unauthorized'], 401);
     }
 
