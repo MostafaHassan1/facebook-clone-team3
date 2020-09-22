@@ -30,7 +30,7 @@ class AuthController extends Controller
             'birthdate' => 'required|date',
              ]);
 
-        /*
+        /* test
             $req->gender == 1 :: this is man
             $req->gender == 2 :: this is woman
             $req->gender == !1 || !2 :: wrong data
