@@ -17,4 +17,4 @@ Route::get('/send-mail', function () {
 Route::get('/', function () {
     return view('welcome');
 });
-// test only // sry new test
+// test only // sry new test //
