@@ -5,72 +5,58 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ValidationController;
 use App\Mail\MailtrapExample;
 use App\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str ;
 
 class AuthController extends Controller
 {
-
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login','signin']]);
+        $this->middleware('auth:api', ['except' => ['login', 'signin']]);
     }
 
-    public function signin(Request $req)
+    public function signin(ValidationController $request)
     {
-        $validatedData = $req->validate(
-            [
-            'firstname' => 'required|max:255',
-            'lastname' => 'required',
-            'email' => 'required|email:rfc,dns|unique:users',
-            'password' => 'required|min:8',
-            'gender' => 'required',
-            'birthdate' => 'required|date',
-             ]);
-
-        /* test
-            $req->gender == 1 :: this is man
-            $req->gender == 2 :: this is woman
-            $req->gender == !1 || !2 :: wrong data
-        */
-        $flag = 1 ;
-
-        if($req->gender == 1 || $req->gender == 2 )    {  $flag = 1 ;  }
-
-        else {$flag = 0 ; echo "please enter Correct Gender" ; }
-
-        if ($flag == 1)
-         {
-
-
-            User::create( $req->all()  ) ;
-            return "Check your email inbox for verification link" ;
-         }
-    }
-
+        $validated = $request->validated();
+        $new_code = Str::random(50);
+        if($validated == true )
+        {
+            // User::create( $request->all() , ['vcode' => $new_code]);
+            User::create([
+                'firstname' => $request['firstname'],
+                'lastname' => $request['lastname'],
+                'birthdate' => $request['birthdate'],
+                'gender' => $request['gender'],
+                'email' => $request['email'],
+                'password' => $request['password'],
+                'vcode'=>  $new_code
+            ]);
+            Mail::to($request->email)->send(new MailtrapExample() );
+            return "Check your email inbox for verification link";
+        }}
 
     public function login(Request $request)
     {
         $validatedData = $request->validate(
             [
+                'email' => 'required|email:rfc,dns|unique:users',
+                'password' => 'required|min:8|max:50',  // password accept Spaces
+            ]
+        );
 
-            'email' => 'required|email:rfc,dns|unique:users',
-            'password' => 'required|min:8',
-
-             ]);
-
-        $credentials = $request->only('email', 'password');
-         if ($token = $this->guard()->attempt($credentials)) {
+        $credentials = $request->only('email','password');
+        if ($token = $this->guard()->attempt($credentials)) {
             return $this->respondWithToken($token);
         }
 
-        echo ($request->email." not Exist plz enter Correct E-mail");
+        echo ($request->email . " not Exist plz enter Correct E-mail");
         echo "\n";
 
         Mail::to($request->email)->send(new MailtrapExample());
-        echo "Hello ".$request->email." please see your inbox \n ";
+        echo "Hello " . $request->email . " please see your inbox \n ";
         return response()->json(['error' => 'Unauthorized'], 401);
     }
 
@@ -108,5 +94,4 @@ class AuthController extends Controller
     {
         return Auth::guard();
     }
-
 }

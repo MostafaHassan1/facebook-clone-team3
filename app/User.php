@@ -6,20 +6,25 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Support\Str;
 
-class User extends Authenticatable  implements JWTSubject
+$test = Str::random(50);
+class User extends Authenticatable  implements JWTSubject, MustVerifyEmail
 {
     use Notifiable;
 
+    public $timestamps = true;
+
     protected $fillable = [
-        'firstname','lastname','birthdate','gender', 'email', 'password',
+        'firstname', 'lastname', 'birthdate', 'gender', 'email', 'password','vcode',
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token'
     ];
 
-    protected $casts = [
+    protected $casts =
+    [
         'email_verified_at' => 'datetime',
     ];
 
@@ -28,19 +33,14 @@ class User extends Authenticatable  implements JWTSubject
         $this->attributes['password'] = bcrypt($password);
     }
 
-    public $timestamps = false;
-
 
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
 
-
     public function getJWTCustomClaims()
     {
         return [];
     }
-
-
 }

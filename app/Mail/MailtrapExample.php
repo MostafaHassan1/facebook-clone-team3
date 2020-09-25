@@ -15,8 +15,8 @@ class MailtrapExample extends Mailable
 
 public function build()
     {
-        return $this->from('mail@example.com', 'Mailtrap')
-            ->subject('Mailtrap Confirmation')
+        return $this->from('team3@back.end', 'Facebook-Clone-team3')
+            ->subject('Mail-Verification')
             ->markdown('mails.exmpl')
             ->with([
                 'name' => 'Hello Team3',
