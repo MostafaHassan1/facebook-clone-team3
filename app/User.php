@@ -16,18 +16,18 @@ class User extends Authenticatable  implements JWTSubject, MustVerifyEmail
     public $timestamps = true;
 
     protected $fillable = [
-        'firstname', 'lastname', 'birthdate', 'gender', 'email', 'password','vcode',
+        'firstname', 'lastname', 'birthdate', 'gender', 'email', 'password','vcode',//'email_verified_at',
     ];
 
     protected $hidden = [
         'password', 'remember_token'
     ];
-
+    /*
     protected $casts =
     [
         'email_verified_at' => 'datetime',
     ];
-
+    */
     public function setPasswordAttribute($password)
     {
         $this->attributes['password'] = bcrypt($password);

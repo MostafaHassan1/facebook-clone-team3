@@ -13,6 +13,7 @@ Route::get('/send-mail', function () {
 
 });
 
+Route::get('user/verify/{verification_code}', 'AuthController@verifyUser');
 
 Route::get('/', function () {
     return view('welcome');

@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ValidationController extends FormRequest
+class Validate_signup extends FormRequest
 {
     public function authorize()
     {
