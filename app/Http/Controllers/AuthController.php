@@ -24,18 +24,18 @@ class AuthController extends Controller
         {
             User::create(array_merge($validated,['vcode'=>$new_code]) ) ;
 
-            {   //******************Mail-Block******************
-                $email= $request->email;
-                $name = $request['firstname'];
-                $subject  = 'Verify Mail To Login';
+            /******************Mail-Block******************/
+            $email= $request->email;
+            $name = $request['firstname'];
+            $subject  = 'Verify Mail To Login';
 
-                Mail::send('email.verify', ['name' => $request->firstname, 'verification_code' => $new_code],
-                function($mail) use ($email, $name, $subject){
-                    $mail->from('test@gmail.com');
-                    $mail->to($email, $name);
-                    $mail->subject($subject);
-                });
-            }
+            Mail::send('email.verify', ['name' => $request->firstname, 'verification_code' => $new_code],
+            function($mail) use ($email, $name, $subject){
+                $mail->from('test@gmail.com');
+                $mail->to($email, $name);
+                $mail->subject($subject);
+            });
+             /******************Mail-Block******************/
             return response()->json(['success'=>"Check your email inbox for verification link"],200);
         }}
 
