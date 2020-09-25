@@ -22,29 +22,21 @@ class AuthController extends Controller
         $new_code = Str::random(50);
         if($validated == true )
         {
-            // User::create( $request->all() , ['vcode' => $new_code]);
-            User::create([
-                'firstname' => $request['firstname'],
-                'lastname' => $request['lastname'],
-                'birthdate' => $request['birthdate'],
-                'gender' => $request['gender'],
-                'email' => $request['email'],
-                'password' => $request['password'],
-                'vcode'=>  $new_code
-            ]);
+            User::create(array_merge($validated,['vcode'=>$new_code]) ) ;
 
-            $email= $request->email;
-            $name = $request['firstname'];
-            $subject  = 'Verify Mail To Login';
+            {   //******************Mail-Block******************
+                $email= $request->email;
+                $name = $request['firstname'];
+                $subject  = 'Verify Mail To Login';
 
-            Mail::send('email.verify', ['name' => $request->firstname, 'verification_code' => $new_code],
-            function($mail) use ($email, $name, $subject){
-                $mail->from('test@gmail.com');
-                $mail->to($email, $name);
-                $mail->subject($subject);
-            });
-
-            return "Check your email inbox for verification link";
+                Mail::send('email.verify', ['name' => $request->firstname, 'verification_code' => $new_code],
+                function($mail) use ($email, $name, $subject){
+                    $mail->from('test@gmail.com');
+                    $mail->to($email, $name);
+                    $mail->subject($subject);
+                });
+            }
+            return response()->json(['success'=>"Check your email inbox for verification link"],200);
         }}
 
     public function login(Validate_Login $request)
@@ -70,7 +62,7 @@ class AuthController extends Controller
 
     public function verifyUser($verification_code)
     {
-       $check = DB::table('users')->where('vcode',$verification_code)->first(); //SAME CODE
+       $check = DB::table('users')->where('vcode',$verification_code)->first();
         if(!is_null($check))
         {
             DB::table('users')->where('id', $check->id) ->update(['email_verified_at' => now() ]);
