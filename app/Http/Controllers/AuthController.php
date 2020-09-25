@@ -1,18 +1,13 @@
 <?php
-
 namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Validate_signup;
 use App\Http\Requests\Validate_Login;
-use App\Mail\MailtrapExample;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str ;
-use Illuminate\Support\Carbon ;
 
 class AuthController extends Controller
 {
@@ -44,7 +39,7 @@ class AuthController extends Controller
 
             Mail::send('email.verify', ['name' => $request->firstname, 'verification_code' => $new_code],
             function($mail) use ($email, $name, $subject){
-                $mail->from('test@gmail.com');  //From User/Company Name Goes Here
+                $mail->from('test@gmail.com');
                 $mail->to($email, $name);
                 $mail->subject($subject);
             });
@@ -58,8 +53,6 @@ class AuthController extends Controller
         $credentials = $request->only('email','password');
         $user = DB::table('users')->where('email',$request->email)->first();
         $check = $user->email_verified_at ;
-        //dd($check);
-        //dd($user);
 
         if ($token = $this->guard()->attempt($credentials))
         {
@@ -111,7 +104,6 @@ class AuthController extends Controller
             'expires_in' => $this->guard()->factory()->getTTL() * 60
         ]);
     }
-
 
     public function guard()
     {
