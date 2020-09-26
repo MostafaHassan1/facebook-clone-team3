@@ -45,7 +45,7 @@ class AuthController extends Controller
         $credentials = $request->only('email','password');
         $user = DB::table('users')->where('email',$request->email)->first();
         $check = $user->email_verified_at ;
-
+        //$test = Auth::user()
         if ($token = $this->guard()->attempt($credentials))
         {
             if(is_null($check))
@@ -66,9 +66,9 @@ class AuthController extends Controller
         if(!is_null($check))
         {
             DB::table('users')->where('id', $check->id) ->update(['email_verified_at' => now() ]);
-            return response()->json([ 'success'=> true, 'message'=> 'successfully verified email address.']);
+            return response()->json([ 'success'=> true, 'message'=> 'successfully verified email address.'],200);
         }
-       return response()->json(['success'=> false, 'error'=> "Verification code is invalid."]);
+       return response()->json(['success'=> false, 'error'=> "Verification code is invalid."],401);
     }
 
     public function me()
