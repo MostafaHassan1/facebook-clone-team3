@@ -67,7 +67,7 @@ class AuthController extends Controller
         if (!is_null($check)) {
             DB::table('users')->where('id', $check->id)->update(['email_verified_at' => now()]);
             //return response()->json(['success'=> true,'message'=>'successfully verified email address.'],200);
-            return view('welcome');
+            return view('welcome');     //test
         }
         return response()->json(['success' => false, 'error' => "Verification code is invalid."], 401);
     }
