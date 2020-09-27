@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Validate_signup;
 use App\Http\Requests\Validate_Login;
+use App\Http\Requests\Validate_change_password;
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -15,7 +17,7 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'signin', 'verifyUser']]);
+        $this->middleware('auth:api', ['except' => ['login', 'signin', 'verifyUser', 'changePasswrod']]);
     }
 
     public function signin(Validate_signup $request)
@@ -65,9 +67,18 @@ class AuthController extends Controller
     {
         $check = DB::table('users')->where('vcode', $verification_code)->first();
         if (!is_null($check)) {
+            if($check->email_verified_at != null )
+            {
+
+            }
+
+            else
+        {
             DB::table('users')->where('id', $check->id)->update(['email_verified_at' => now()]);
+        }
+
             //return response()->json(['success'=> true,'message'=>'successfully verified email address.'],200);
-            return view('welcome');
+            return view('Complete');
         }
         return response()->json(['success' => false, 'error' => "Verification code is invalid."], 401);
     }
@@ -88,6 +99,37 @@ class AuthController extends Controller
     {
         return $this->respondWithToken($this->guard()->refresh());
     }
+
+
+    public function changePasswrod(Validate_change_password $request)
+    {
+        $user = Auth::user();
+
+        if (Auth::Check())
+        {
+
+            $validated = $request->validated();
+            if($validated == true )
+            {
+                $currentPassword = Auth::User()->password;
+                if (Hash::check($validated['password'], $currentPassword)) {
+                    $userId = Auth::User()->id;
+                    $user = User::find($userId);
+                    $user->password = Hash::make($validated['new_pass']);;
+                    $user->save();
+                    return view('Complete');   // return  back()->with('message', 'Your password has been updated successfully.');
+                } else {
+                    return back()->withErrors(['Sorry, your current password was not recognised. Please try again.']);
+                }
+
+            }
+        } else
+        {
+            return response()->json(['Sorry,User Not Authorized.'],401);
+        }
+    }
+
+
 
     protected function respondWithToken($token)
     {
