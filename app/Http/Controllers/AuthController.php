@@ -69,7 +69,7 @@ class AuthController extends Controller
         if (!is_null($check)) {
             if($check->email_verified_at != null )
             {
-
+                return response()->json(['error' => "anta 3mlt verify 2bl kdh "], 401);
             }
 
             else
