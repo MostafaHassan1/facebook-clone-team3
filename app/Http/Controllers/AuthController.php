@@ -104,32 +104,34 @@ class AuthController extends Controller
     public function changePasswrod(Validate_change_password $request)
     {
         $user = Auth::user();
-
         if (Auth::Check())
         {
-
             $validated = $request->validated();
             if($validated == true )
             {
                 $currentPassword = Auth::User()->password;
-                if (Hash::check($validated['password'], $currentPassword)) {
+
+                if (Hash::check($validated['password'], $currentPassword))
+                {
                     $userId = Auth::User()->id;
                     $user = User::find($userId);
                     $user->password = Hash::make($validated['new_pass']);;
                     $user->save();
-                    return view('Complete');   // return  back()->with('message', 'Your password has been updated successfully.');
-                } else {
-                    return back()->withErrors(['Sorry, your current password was not recognised. Please try again.']);
+                    return response()->json(["Your password has been updated successfully"],200);
+                    //return view("complete");
+                    //back()->with('message', 'Your password has been updated successfully.');
                 }
-
+                else
+                {
+                    return response()->json(["Your password has NOT been updated successfully"],401);
+                    //return back()->withErrors(['Sorry, your current password was not recognised. Please try again.']);
+                }
             }
         } else
         {
             return response()->json(['Sorry,User Not Authorized.'],401);
         }
     }
-
-
 
     protected function respondWithToken($token)
     {
