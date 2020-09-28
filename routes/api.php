@@ -14,6 +14,7 @@ Route::group([
 ], function ($router)
 {
 
+    Route::Post('resetPassword', 'AuthController@resetPassword');
     Route::Post('signin', 'AuthController@signin');
     Route::post('login', 'AuthController@login');
     Route::post('logout', 'AuthController@logout');

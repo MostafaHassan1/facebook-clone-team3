@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Validate_signup;
 use App\Http\Requests\Validate_Login;
 use App\Http\Requests\Validate_change_password;
+use App\Http\Requests\Validate_reset;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +16,7 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'signin', 'verifyUser', 'changePasswrod']]);
+        $this->middleware('auth:api', ['except' => ['login', 'signin', 'verifyUser','resetPassword','update_password'] ]);
     }
 
     public function signin(Validate_signup $request)
@@ -48,16 +47,20 @@ class AuthController extends Controller
 
     public function login(Validate_Login $request)
     {
+
         $validated = $request->validated();
         if ($validated == true) {
             $credentials = $request->only('email', 'password');
-            if ($token = $this->guard()->attempt($credentials)) {
+
+            if ($token = $this->guard()->attempt($credentials))
+            {
                 $user = auth()->user()->email_verified_at;
                 if (is_null($user)) {
                     return response()->json(['error' => "Please check your email inbox for verfication email"], 401);
                 }
                 return $this->respondWithToken($token);
-            } else {
+            }
+             else {
                 return response()->json(['error' => "Wrong credintials, Please try to login with a valid e-mail and password"], 401);
             }
         }
@@ -66,20 +69,21 @@ class AuthController extends Controller
     public function verifyUser($verification_code)
     {
         $check = DB::table('users')->where('vcode', $verification_code)->first();
-        if (!is_null($check)) {
+        if (!is_null($check))
+         {
             if($check->email_verified_at != null )
             {
                 return response()->json(['error' => "anta 3mlt verify 2bl kdh "], 401);
             }
 
             else
-        {
-            DB::table('users')->where('id', $check->id)->update(['email_verified_at' => now()]);
-        }
+            {
+                DB::table('users')->where('id', $check->id)->update(['email_verified_at' => now()]);
+            }
 
             //return response()->json(['success'=> true,'message'=>'successfully verified email address.'],200);
             return view('Complete');
-        }
+         }
         return response()->json(['success' => false, 'error' => "Verification code is invalid."], 401);
     }
 
@@ -99,10 +103,53 @@ class AuthController extends Controller
     {
         return $this->respondWithToken($this->guard()->refresh());
     }
+    public function resetPassword(Validate_reset $request)
+    {
+        $validated = $request->validated();
 
+        if($validated == true )
+        {
+            $user = DB::table('users')->where('email',$request->email)->first();
+
+             /******************Mail-Block******************/
+             $email = $request->email;
+             $name = $user->firstname;
+             $subject  = 'Resetting Password';
+
+             Mail::send
+             (
+                 'email.reset_pass_view',
+                 ['name' => $user->firstname , 'vcode' => $user->vcode],
+                 function ($mail) use ($email, $name, $subject)
+                  {
+                     $mail->from('backend@team3.com');
+                     $mail->to($email, $name);
+                     $mail->subject($subject);
+                 }
+             );
+
+             /******************Mail-Block******************/
+            return response()->json(['success' => "Check your email inbox for Restting Email"], 200);
+
+        }
+    }
+    public function update_password($vcode,$password)
+    {
+        //dd($password);    //dd($vcode);
+        // validate password
+        // check vcode ??
+       //   $user = User::find($userId);
+
+        $user_1 = DB::table('users')->where('vcode',$vcode)->first();
+
+        $user_2 = User::find($user_1->id);
+        $user_2->password = $password ;
+        $user_2->save();
+    }
 
     public function changePasswrod(Validate_change_password $request)
     {
+
         $user = Auth::user();
         if (Auth::Check())
         {
@@ -115,8 +162,14 @@ class AuthController extends Controller
                 {
                     $userId = Auth::User()->id;
                     $user = User::find($userId);
-                    $user->password = Hash::make($validated['new_pass']);;
-                    $user->save();
+
+                    if($validated['new_pass'] == $validated['conifrm_new_pass'] )
+                    {
+                        $user->password = $validated['conifrm_new_pass'] ;
+                        $user->save();
+
+                    }
+
                     return response()->json(["Your password has been updated successfully"],200);
                     //return view("complete");
                     //back()->with('message', 'Your password has been updated successfully.');
