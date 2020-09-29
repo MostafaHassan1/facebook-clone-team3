@@ -6,6 +6,7 @@ use App\Http\Requests\Validate_signup;
 use App\Http\Requests\Validate_Login;
 use App\Http\Requests\Validate_change_password;
 use App\Http\Requests\Validate_reset;
+use App\Http\Requests\Validate_update_box ;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -103,6 +104,38 @@ class AuthController extends Controller
     {
         return $this->respondWithToken($this->guard()->refresh());
     }
+    public function updateBox(Validate_update_box $request)
+    {
+        /* Validate  Name  Phone   Birthday
+
+         I can: change some of my profile details
+         So that: I can update my profile info
+        */
+        $validated = $request->validated();
+
+        if($validated == true )
+        {
+            $user = User::find(Auth::user()->id);
+            $other_users = DB::table('users')->where('phone',$validated['phone'])->first();
+
+             if(!(is_null($other_users)) &&  ($other_users->id == $user->id) )    // have value
+            {
+                $user->firstname = $validated['firstname'] ;
+                $user->lastname = $validated['lastname'] ;
+                $user->phone =   $validated['phone'] ;
+                $user->birthdate =   $validated['birthdate'] ;
+                $user->save();
+                return response()->json(['success'=>'Profile Successfully Updated :) '],200);
+
+            }
+            else
+            {
+                return response()->json(['Err'=>'the phone number currently Used with Other Users'],401);
+            }
+        }
+
+
+    }
     public function resetPassword(Validate_reset $request)
     {
         $validated = $request->validated();
@@ -127,29 +160,28 @@ class AuthController extends Controller
                      $mail->subject($subject);
                  }
              );
-
              /******************Mail-Block******************/
             return response()->json(['success' => "Check your email inbox for Restting Email"], 200);
-
         }
     }
     public function update_password($vcode,$password)
     {
-        //dd($password);    //dd($vcode);
-        // validate password
-        // check vcode ??
-       //   $user = User::find($userId);
-
-        $user_1 = DB::table('users')->where('vcode',$vcode)->first();
-
-        $user_2 = User::find($user_1->id);
-        $user_2->password = $password ;
-        $user_2->save();
+        if(strlen($password) < 8)
+        {
+            return response()->json(['err' => "Your Password Length less than 8 charachters"],400);
+        }
+        else
+        {
+            $user_1 = DB::table('users')->where('vcode',$vcode)->first();
+            $user_2 = User::find($user_1->id);
+            $user_2->password = $password ;
+            $user_2->save();
+            return response()->json(['success' => "Your Password Successfully Reset"],200);
+        }
     }
 
     public function changePasswrod(Validate_change_password $request)
     {
-
         $user = Auth::user();
         if (Auth::Check())
         {

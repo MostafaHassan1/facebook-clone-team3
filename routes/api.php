@@ -13,7 +13,8 @@ Route::group([
 
 ], function ($router)
 {
-
+    Route::Post('updateBox', 'AuthController@updateBox');
+    Route::Post('logout', 'AuthController@logout');
     Route::Post('resetPassword', 'AuthController@resetPassword');
     Route::Post('signin', 'AuthController@signin');
     Route::post('login', 'AuthController@login');
@@ -21,6 +22,5 @@ Route::group([
     Route::post('refresh', 'AuthController@refresh');
     Route::post('me', 'AuthController@me');
     Route::post('changePasswrod', 'AuthController@changePasswrod');
-
 });
 
