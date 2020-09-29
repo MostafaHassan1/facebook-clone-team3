@@ -21,7 +21,7 @@ class Validate_signup extends FormRequest
                 'password' => 'required|min:8|max:50',   //'password' => 'password:api' // password accept Spaces
                 'gender' => 'required|between:1,2|integer', // 1 = Man , 2 = Woman
                 'birthdate' => 'required|date',     //YYYY/MM/DD
-                'phone' => 'required|numeric|unique:users|regex:/(01)[0-9]{9}/',
+                //'phone' => 'required|numeric|unique:users|regex:/(01)[0-9]{9}/',
 
 
         ];

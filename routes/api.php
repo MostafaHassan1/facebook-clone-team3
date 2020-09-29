@@ -13,14 +13,14 @@ Route::group([
 
 ], function ($router)
 {
-    Route::Post('updateBox', 'AuthController@updateBox');
+    Route::Post('edit_profile', 'AuthController@edit_profile');
     Route::Post('logout', 'AuthController@logout');
-    Route::Post('resetPassword', 'AuthController@resetPassword');
+    Route::Post('reset_password', 'AuthController@reset_password');
     Route::Post('signin', 'AuthController@signin');
-    Route::post('login', 'AuthController@login');
+    Route::post('login', 'AuthController@login')->name('login');
     Route::post('logout', 'AuthController@logout');
     Route::post('refresh', 'AuthController@refresh');
     Route::post('me', 'AuthController@me');
-    Route::post('changePasswrod', 'AuthController@changePasswrod');
+    Route::post('change_password', 'AuthController@change_password');
 });
 
