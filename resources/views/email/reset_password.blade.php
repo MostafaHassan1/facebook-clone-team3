@@ -11,10 +11,11 @@
     <br> Please write new password
     <br>
     <!-- get password from box here -->
-    <a href="{{ url('reset_pass',$vcode)}}">Set New Password</a>
+    <a href="{{ url('reset_pass',$token)}}">Set New Password</a>
 
     <br/>
 </div>
 
 </body></html>
 
+<form method="POST" action="{{ url('/reset_password_without_token') }}">

@@ -7,7 +7,9 @@ use App\Http\Requests\Validate_Login;
 use App\Http\Requests\Validate_change_password;
 use App\Http\Requests\Validate_reset;
 use App\Http\Requests\Validate_edit_profile;
+use App\Http\Requests\Validate_reset_2;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -19,7 +21,7 @@ class AuthController extends Controller
     {
         $this->middleware(
             'auth:api',
-            ['except' => ['login', 'signin', 'verifyUser', 'resetPassword', 'update_password']]
+            ['except' => ['login', 'signin', 'verifyUser', 'reset_password', 'update_password']]
         );
     }
 
@@ -72,7 +74,7 @@ class AuthController extends Controller
             else    // User Has Not Verified his E-mail
             {
                 User::where('id', $check->id)->update(['email_verified_at' => now()]);
-                //redirect()->route('login');
+              //dd(Auth::login($check));
                 return view('verifyUser_view');
             }
         }
@@ -101,57 +103,25 @@ class AuthController extends Controller
 
     /*
         User can Edit profile details
-        So that: I can update my profile info  Name Phone Birthday
+        I can update my profile info  Name Phone Birthday
+        i think mobile send old data in field and user choice to edit or not
     */
     public function edit_profile(Validate_edit_profile $request)
     {
-            $user = User::find(Auth::user()->id);
+        $all = DB::table('users')->where('phone', request('phone'))->first();
+        $user = User::find(Auth::user()->id);
+        if( $all==true && ($user->phone == request('phone')) ) // phone exist with other users
+        {
+            $user->phone = request('phone');
             $user->firstname = request('firstname');
             $user->lastname = request('lastname');
-            $user->phone = request('phone');
             $user->birthdate = request('birthdate');
             $user->save();
             return response()->json(['success' => 'Profile Successfully Updated :) '],202);
-    }
-
-    /*
-        I can reset my password if forgetten by providing my email
-
-        When: I provide a not valide email format
-        then:  Show error msg that says "This is not a valid email"
-
-        When: navigate to my email and try to set my new password
-        then: the password must be more than 8 character ,
-        else show an error msg "Password can't be less than 8 characters"
-    */
-    public function reset_password(Validate_reset $request)
-    {
-            $user = DB::table('users')->where('email', $request->email)->first();
-            /******************Mail-Block******************/
-            $email = $request->email;
-            $name = $user->firstname;
-            $subject  = 'Resetting Password';
-            Mail::send('email.reset_pass_view',['name' => $user->firstname, 'vcode'=>$user->vcode],
-                function ($mail) use ($email, $name, $subject)
-                {
-                    $mail->from('backend@team3.com');
-                    $mail->to($email, $name);
-                    $mail->subject($subject);
-                });
-            /******************Mail-Block******************/
-            return response()->json(['success' => "Check your email inbox for Restting Email"], 202);
-    }
-    public function update_password($vcode, $password)
-    {
-        if (strlen($password) < 8)
+        }
+        else
         {
-            return response()->json(['error' => "Your Password Length less than 8 charachters"], 400);
-        } else {
-            $user_1 = DB::table('users')->where('vcode', $vcode)->first();
-            $user_2 = User::find($user_1->id);
-            $user_2->password = $password;
-            $user_2->save();
-            return response()->json(['success' => "Your Password Successfully Reset"], 200);
+            return response()->json(['error' => 'this phone used with other users '],405);
         }
     }
 
@@ -185,5 +155,75 @@ class AuthController extends Controller
     public function guard()
     {
         return Auth::guard();
+    }
+
+    /*
+        I can reset my password if forgetten by providing my email
+
+        When: I provide a not valide email format
+        then:  Show error msg that says "This is not a valid email"
+
+        When: navigate to my email and try to set my new password
+        then: the password must be more than 8 character ,
+        else show an error msg "Password can't be less than 8 characters"
+    */
+    public function reset_password(Validate_reset $request)
+    {
+        $user = DB::table('users')->where('email', $request->email)->first();
+
+        if ($user)
+        {
+            DB::table('password_resets')->insert([
+                'email' => $request->email,
+                'token' => Str::random(60),
+                'created_at' => Carbon::now()
+            ]);
+
+            $tokenData = DB::table('password_resets')->where('email', $request->email)->first();
+            /******************Mail-Block******************/
+            $email = $request->email;
+            $name = $user->firstname;
+            $subject  = 'Resetting Password';
+            Mail::send('email.reset_password',['name'=>$user->firstname,'token'=>$tokenData->token],
+                function ($mail) use ($email, $name, $subject)
+                {
+                    $mail->from('backend@team3.com');
+                    $mail->to($email, $name);
+                    $mail->subject($subject);
+                });
+            /******************Mail-Block******************/
+            return response()->json(['success' => "Check your email inbox for Restting Email"], 202);
+        }
+    }
+
+    public function reset_password_2(Validate_reset_2 $request)
+     {
+
+        $password = $request->password;
+
+        $tokenData = DB::table('password_resets')->where('token', $request->token)->first();
+
+        if (!$tokenData) return view('auth.passwords.email');
+
+         $user = User::where('email', $tokenData->email)->first();
+
+         if (!$user) return redirect()->back()->withErrors(['email' => 'Email not found']);
+
+        $user->password = $password;
+        $user->update();
+
+         Auth::login($user);
+
+         DB::table('password_resets')->where('email', $user->email)->delete();
+
+         if ($this->sendSuccessEmail($tokenData->email))
+        {
+            return view('index');
+        }
+        else
+        {
+            return redirect()->back()->withErrors(['email' => trans('A Network Error occurred. Please try again.')]);
+        }
+
     }
 }

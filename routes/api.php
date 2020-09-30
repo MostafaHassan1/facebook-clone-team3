@@ -15,12 +15,13 @@ Route::group([
 {
     Route::Post('edit_profile', 'AuthController@edit_profile');
     Route::Post('logout', 'AuthController@logout');
-    Route::Post('reset_password', 'AuthController@reset_password');
     Route::Post('signin', 'AuthController@signin');
     Route::post('login', 'AuthController@login')->name('login');
-    Route::post('logout', 'AuthController@logout');
     Route::post('refresh', 'AuthController@refresh');
     Route::post('me', 'AuthController@me');
     Route::post('change_password', 'AuthController@change_password');
-});
 
+    Route::Post('/reset_password_without_token', 'AuthController@reset_password');
+    Route::post('reset_pass/{vcode}/{password}','AuthController@reset_password_2');
+
+});
