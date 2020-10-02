@@ -21,7 +21,7 @@ Route::group([
     Route::post('me', 'AuthController@me');
     Route::post('change_password', 'AuthController@change_password');
 
-    Route::Post('/reset_password_without_token', 'AuthController@reset_password');
-    Route::post('reset_pass/{vcode}/{password}','AuthController@reset_password_2');
+    Route::Post('reset_password', 'AuthController@reset_password');
+    Route::post('reset_pass/{token}','AuthController@reset_password_2');
 
 });

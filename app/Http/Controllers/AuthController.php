@@ -21,7 +21,7 @@ class AuthController extends Controller
     {
         $this->middleware(
             'auth:api',
-            ['except' => ['login', 'signin', 'verifyUser', 'reset_password', 'update_password']]
+            ['except' => ['login', 'signin', 'verifyUser', 'reset_password', 'reset_password_2']]
         );
     }
 
@@ -196,34 +196,37 @@ class AuthController extends Controller
         }
     }
 
-    public function reset_password_2(Validate_reset_2 $request)
+    public function reset_password_2($token)
      {
+        $tokenData = DB::table('password_resets')->where('token', $token)->first();
 
-        $password = $request->password;
+        if (!$tokenData)
+        {return response()->json(["error"=>"token not valied \n "]);}
 
-        $tokenData = DB::table('password_resets')->where('token', $request->token)->first();
+        $user = User::where('email', $tokenData->email)->first();
 
-        if (!$tokenData) return view('auth.passwords.email');
+        if (!$user)
+        {return response()->json(["error"=>"sry user does not use this token ...  "],405);}
 
-         $user = User::where('email', $tokenData->email)->first();
-
-         if (!$user) return redirect()->back()->withErrors(['email' => 'Email not found']);
-
-        $user->password = $password;
-        $user->update();
+        $user->password = $token;
+        $user->save();                          // $user->update();
 
          Auth::login($user);
 
          DB::table('password_resets')->where('email', $user->email)->delete();
 
+         return response()->json(["success"=>"Welcome ".$user->firstname." ... "],200);
+        /*
          if ($this->sendSuccessEmail($tokenData->email))
         {
-            return view('index');
+           echo "test";
+           // return view('index');
         }
         else
         {
             return redirect()->back()->withErrors(['email' => trans('A Network Error occurred. Please try again.')]);
         }
+        */
 
     }
 }
