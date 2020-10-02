@@ -17,8 +17,8 @@ class Validate_change_password extends FormRequest
     {
         return
         [
-                'password' => 'required|min:8|max:50',
-                'new_pass' => 'required|min:8|max:50|required_with:conifrm_new_pass|same:conifrm_new_pass',
+                'password' => 'required|min:8',
+                'new_pass' => 'required|min:8|required_with:conifrm_new_pass|same:conifrm_new_pass',
         ];
     }
 }

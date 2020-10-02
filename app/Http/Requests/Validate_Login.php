@@ -26,7 +26,7 @@ class Validate_Login extends FormRequest
         return [
 
                 'email' => 'required|email:rfc,dns',
-                'password' => 'required|min:8|max:50',  // password accept Spaces
+                'password' => 'required|min:8',  // password accept Spaces
 
         ];
         // Wrong credintials, Please try to login with a valid e-mail and password

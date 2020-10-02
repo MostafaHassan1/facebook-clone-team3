@@ -7,7 +7,6 @@ use App\Http\Requests\Validate_Login;
 use App\Http\Requests\Validate_change_password;
 use App\Http\Requests\Validate_reset;
 use App\Http\Requests\Validate_edit_profile;
-use App\Http\Requests\Validate_reset_2;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -92,7 +91,6 @@ class AuthController extends Controller
     public function logout()
     {
         $this->guard()->logout();
-
         return response()->json(['success' => 'Successfully logged out'], 202);
     }
 
@@ -170,21 +168,19 @@ class AuthController extends Controller
     public function reset_password(Validate_reset $request)
     {
         $user = DB::table('users')->where('email', $request->email)->first();
-
         if ($user)
         {
-            DB::table('password_resets')->insert([
+           DB::table('password_resets')->insert([
                 'email' => $request->email,
-                'token' => Str::random(60),
+                'token' => mt_rand(10000000, 99999999), // 6 digit Str::random(10)
                 'created_at' => Carbon::now()
             ]);
-
             $tokenData = DB::table('password_resets')->where('email', $request->email)->first();
             /******************Mail-Block******************/
             $email = $request->email;
             $name = $user->firstname;
             $subject  = 'Resetting Password';
-            Mail::send('email.reset_password',['name'=>$user->firstname,'token'=>$tokenData->token],
+            Mail::send('email.reset_password',['name'=>$user->firstname,'token'=> $tokenData->token],
                 function ($mail) use ($email, $name, $subject)
                 {
                     $mail->from('backend@team3.com');
@@ -209,6 +205,7 @@ class AuthController extends Controller
         {return response()->json(["error"=>"sry user does not use this token ...  "],405);}
 
         $user->password = $token;
+
         $user->save();                          // $user->update();
 
          Auth::login($user);
@@ -216,17 +213,5 @@ class AuthController extends Controller
          DB::table('password_resets')->where('email', $user->email)->delete();
 
          return response()->json(["success"=>"Welcome ".$user->firstname." ... "],200);
-        /*
-         if ($this->sendSuccessEmail($tokenData->email))
-        {
-           echo "test";
-           // return view('index');
-        }
-        else
-        {
-            return redirect()->back()->withErrors(['email' => trans('A Network Error occurred. Please try again.')]);
-        }
-        */
-
     }
 }
