@@ -14,7 +14,7 @@ Route::group([
 ], function ($router)
 {
     Route::Post('edit_profile', 'AuthController@edit_profile');
-    Route::Post('logout', 'AuthController@logout');
+    Route::Post('logout','AuthController@logout');
     Route::Post('signin', 'AuthController@signin');
     Route::post('login', 'AuthController@login')->name('login');
     Route::post('refresh', 'AuthController@refresh');
