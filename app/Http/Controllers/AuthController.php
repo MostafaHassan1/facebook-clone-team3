@@ -7,10 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Validate_signup;
 use App\Http\Requests\Validate_Login;
 use App\Http\Requests\Validate_change_password;
-use App\Http\Requests\Validate_reset;
 use App\Http\Requests\Validate_edit_profile;
 use App\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -26,7 +26,7 @@ class AuthController extends Controller
         );
     }
 
-    public function signin(Validate_signup $request)  //Comment Sara:Signup
+    public function signin(Validate_signup $request)  //Comment Sara:Signup - Mail Clean Code
     {
         $new_code = Str::random(50);
         User::create(array_merge(request()->all(), ['vcode' => $new_code]));
@@ -44,20 +44,19 @@ class AuthController extends Controller
             }
         );
         /******************Mail-Block******************/
-        return response()->json(['success' => "Check your email inbox for verification link"], 201);
+        return response()->json(['success' => "Check your email inbox for verification link"], 200);
     }
 
-    public function login(Validate_Login $request)  //Comment:SARA $$$$$$$$$$$$$$$$$$$$$$$$$
+    public function login(Validate_Login $request)
     {
         $credentials = $request->only('email', 'password');
         if ($token = $this->guard()->attempt($credentials)) {
             if (is_null(auth()->user()->email_verified_at)) {
-                return response()->json(['error' => "Please check your email inbox for verfication email"], 405);
+                return response()->json(['error' => "Please check your email inbox for verfication email"], 401);
             }
-            return $this->respondWithToken($token); ///////////xxxxxxxxxxxxxxxxxxxxxxxx/////////////////
-            //return response()->json(['success' => "Hi," . auth()->user()->firstname], 202);
+            return $this->respondWithToken($token);
         } else {
-            return response()->json(['error' => "Wrong credintials, Please try to login with a valid e-mail and password"], 401);
+            return response()->json(['error' => "Wrong credintials, Please try to login with a valid e-mail or password"], 401);
         }
     }
 
@@ -65,16 +64,16 @@ class AuthController extends Controller
     {
         $check = User::where('vcode', $verification_code)->first();
         if (!is_null($check)) {
-            if ($check->email_verified_at != null) //User Has Verified his E-mail
+            if ($check->email_verified_at != null)
             {
-                return response()->json(['error' => "User Has Verified Before"], 405);
-            } else    // User Has Not Verified his E-mail
+                return response()->json(['error' => "User Has Verified Before"], 401);
+            } else
             {
                 User::where('id', $check->id)->update(['email_verified_at' => now()]);
                 return view('verifyUser_view');
             }
         } else {
-            return response()->json(['error' => "Verification code is invalid."], 405);
+            return response()->json(['error' => "Verification code is invalid."], 401);
         }
     }
 
@@ -86,7 +85,7 @@ class AuthController extends Controller
     public function logout()
     {
         $this->guard()->logout();
-        return response()->json(['success' => 'Successfully logged out'], 202);
+        return response()->json(['success' => 'Successfully logged out'], 200);
     }
 
     public function refresh()
@@ -99,36 +98,49 @@ class AuthController extends Controller
         I can update my profile info  Name Phone Birthday
         i think mobile send old data in field and user choice to edit or not
     */
-    public function edit_profile(Validate_edit_profile $request) //Commnt: can user use same mobile with 2 account
-    {   // mobile team send data from database
-        $all = DB::table('users')->where('phone', request('phone'))->first();
-        $user = User::find(Auth::user()->id);
-        if ($all == true && ($user->phone == request('phone'))) // phone exist with other users
+    public function edit_profile(Validate_edit_profile $request)
+    {
+        //$anyuser = DB::table('users')->where('phone',request('phone'))->first();
+        $user = User::find(Auth::user()->id);   ///////////
+        /*
+            1.request data
+            2.validate data from request
+            3.validate from user own his phone  // ready validation in laravel [][][][][]
+            4.accept and edit profile and save
+        */
+       // if ($anyuser == true && ($user->phone == request('phone') )) /////////////
         {
             $user->phone = request('phone');
             $user->firstname = request('firstname');
             $user->lastname = request('lastname');
             $user->birthdate = request('birthdate');
             $user->save();
-            return response()->json(['success' => 'Profile Successfully Updated :) '], 202);
-        } else {
-            return response()->json(['error' => 'this phone used with other users '], 405);
+            return response()->json(['success' => 'Profile Successfully Updated :) '], 200);
         }
+
+        /*else
+         {
+            return response()->json(['error' => 'this phone used with other users'], 401);
+        }
+        */
     }
 
     /* User can change password only when login and get token
        Other Notes:: user can change to same password
     */
-    public function change_password(Validate_change_password $request) //Comment:NESMA-SARA$$$
+    public function change_password(Validate_change_password $request)
     {
-        if (Hash::check(request('password'), Auth::User()->password)) {
-            $user = User::find(Auth::User()->id);
+        if (Hash::check(request('password'), Auth::User()->password))
+         {
+             // new if with new_pass != current pass ????
+            $user = User::find(Auth::User()->id); //$$$$ready validation found in laravel documintation
             $user->password = request('new_pass');
             $user->save();
             return response()->json(["success" => "Password Changed Successfully"], 200);
-        } else {
+         } else
+         {
             return response()->json(["error" => "old password is not correct"], 400);
-        }
+         }
     }
 
     protected function respondWithToken($token)
@@ -155,7 +167,6 @@ class AuthController extends Controller
         then: the password must be more than 8 character ,
         else show an error msg "Password can't be less than 8 characters"
     */
-     
     public function sendresetpasswordemail(Request $request)
     {
         $user = DB::table('users')->where('email', $request->email)->first();
@@ -180,7 +191,6 @@ class AuthController extends Controller
                         );
 
             return response()->json(['success' => 'Check your email inbox for pin '], 200);
-            
         }
     }
 
@@ -201,11 +211,11 @@ class AuthController extends Controller
     {
         $email = DB::table('password_resets')->where('token', $request->token)->where('email', $request->email)->first();
         if ($email) {
-            
+
             $user = User::where('email', $request->email)->first();
-            
+
             $user->password =$request->password;
-            
+
             $user->save();
             //dd($user);
             DB::table('password_resets')->where('email', $request->email)->delete();
@@ -215,7 +225,6 @@ class AuthController extends Controller
             } else {
                 return response()->json('login failed');
             }
-            
         } else {
             return response()->json(["error" => "Pin is not valid"], 422);
         }
