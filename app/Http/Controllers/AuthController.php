@@ -65,11 +65,6 @@ class AuthController extends Controller
     {
         $check = User::where('vcode', $verification_code)->first();
         if (!is_null($check)) {
-<<<<<<< HEAD
-            DB::table('users')->where('id', $check->id)->update(['email_verified_at' => now()]);
-            //return response()->json(['success'=> true,'message'=>'successfully verified email address.'],200);
-            return view('welcome');     //test
-=======
             if ($check->email_verified_at != null) //User Has Verified his E-mail
             {
                 return response()->json(['error' => "User Has Verified Before"], 405);
@@ -80,7 +75,6 @@ class AuthController extends Controller
             }
         } else {
             return response()->json(['error' => "Verification code is invalid."], 405);
->>>>>>> Remote_Branch_Test
         }
     }
 
@@ -91,14 +85,8 @@ class AuthController extends Controller
 
     public function logout()
     {
-<<<<<<< HEAD
-        $this->guard()->logout();   //
-
-        return response()->json(['message' => 'Successfully logged out']);
-=======
         $this->guard()->logout();
         return response()->json(['success' => 'Successfully logged out'], 202);
->>>>>>> Remote_Branch_Test
     }
 
     public function refresh()
@@ -167,60 +155,69 @@ class AuthController extends Controller
         then: the password must be more than 8 character ,
         else show an error msg "Password can't be less than 8 characters"
     */
-    public function reset_password(Validate_reset $request)
+     
+    public function sendresetpasswordemail(Request $request)
     {
         $user = DB::table('users')->where('email', $request->email)->first();
-
-        if ($user)
-        {
+        if ($user) {
+            $token = mt_rand(000000, 999999);
             DB::table('password_resets')->insert([
                 'email' => $request->email,
-                'token' => mt_rand(10000000, 99999999), // 6 digit Str::random(10),
-                'created_at' => Carbon::now()
+                'token' => $token,
+                'created_at' => Carbon::now(),
             ]);
-
-            $tokenData = DB::table('password_resets')->where('email', $request->email)->first();
-            /******************Mail-Block******************/
             $email = $request->email;
             $name = $user->firstname;
-            $subject  = 'Resetting Password';
+            $subject = 'Resetting Password';
             Mail::send(
-                'email.reset_password',
-                ['name' => $user->firstname, 'token' => $tokenData->token],
-                function ($mail) use ($email, $name, $subject) {
-                    $mail->from('backend@team3.com');
-                    $mail->to($email, $name);
-                    $mail->subject($subject);
-                }
-            );
-            /******************Mail-Block******************/
-            return response()->json(['success' => "Check your email inbox for Restting Email"], 202);
+                        'sendrestpassemail',
+                        ['name' => $user->firstname, 'token' => $token],
+                            function ($mail) use ($email,$name,$subject) {
+                                $mail->from('team3@facebookclone.com');
+                                $mail->to($email, $name);
+                                $mail->subject($subject);
+                            }
+                        );
+
+            return response()->json(['success' => 'Check your email inbox for pin '], 200);
+            
         }
     }
 
-    public function reset_password_2($token)
+    public function confirm_pin(Request $request)
     {
-        $tokenData = DB::table('password_resets')->where('token', $token)->first();
-
-        if (!$tokenData) {
-            return response()->json(["error" => "token not valied \n "]);
+        //dd( $request->token);
+        $user = DB::table('password_resets')->where('email', $request->email)->where('token', $request->token)->first(); //get()
+        if ($user) {
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false, 'message' => 'invalid pin'], 422);
         }
+    }
 
-        $user = User::where('email', $tokenData->email)->first();
+    //url = POST api/reset_password , new password , email , pin
 
-        if (!$user) {
-            return response()->json(["error" => "sry user does not use this token ...  "], 405);
+    public function resetpassword(Request $request)
+    {
+        $email = DB::table('password_resets')->where('token', $request->token)->where('email', $request->email)->first();
+        if ($email) {
+            
+            $user = User::where('email', $request->email)->first();
+            
+            $user->password =$request->password;
+            
+            $user->save();
+            //dd($user);
+            DB::table('password_resets')->where('email', $request->email)->delete();
+            $credentials = $request->only(['email', 'password']);
+            if ($token = auth()->attempt($credentials)) {
+                return $this->respondWithToken($token);
+            } else {
+                return response()->json('login failed');
+            }
+            
+        } else {
+            return response()->json(["error" => "Pin is not valid"], 422);
         }
-
-        // code review  update user password with [token or send view get password]  %%%%^%^%$^#@^#$@^%$#@!&^@#$^#@
-        $user->password = $token;
-
-        $user->save(); // $user->update();
-
-        Auth::login($user);
-
-        DB::table('password_resets')->where('email', $user->email)->delete();
-
-        return response()->json(["success" => "Welcome " . $user->firstname . " ... "], 200);
     }
 }
