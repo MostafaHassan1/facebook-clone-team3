@@ -136,6 +136,7 @@ return [
     'custom' =>
     [
         'email' => [   'unique' => 'This email already has an account',     ],
+        'phone' => [   'integer' => 'the phone must be numbers only ',     ],
 
     ],
 

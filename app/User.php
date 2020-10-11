@@ -16,7 +16,7 @@ class User extends Authenticatable  implements JWTSubject, MustVerifyEmail
     public $timestamps = true;
 
     protected $fillable = [
-        'firstname', 'lastname', 'birthdate', 'gender', 'email', 'password','vcode',//'email_verified_at',
+        'firstname', 'lastname', 'birthdate', 'gender', 'email', 'password','phone','vcode',//'email_verified_at',
     ];
 
     protected $hidden = [
