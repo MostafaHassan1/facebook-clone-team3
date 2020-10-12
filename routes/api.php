@@ -12,16 +12,15 @@ Route::group([
     'prefix' => 'auth'
 
 ], function ($router)
-{
-    Route::Post('edit_profile', 'AuthController@edit_profile');
-    Route::Post('logout','AuthController@logout');
-    Route::Post('signin', 'AuthController@signin');
-    Route::post('login', 'AuthController@login')->name('login');
-    Route::post('refresh', 'AuthController@refresh');
-    Route::post('me', 'AuthController@me');
-    Route::post('change_password', 'AuthController@change_password');
-
-    Route::Post('sendresetpasswordemail', 'AuthController@sendresetpasswordemail');
-    Route::post('reset_pass/{token}','AuthController@reset_password_2');
-
-});
+    {
+    /*1*/Route::Post('signin','AuthController@signin');
+    /*2*/Route::Post('verify/{verification_code}','AuthController@verifyUser');
+    /*3*/Route::post('login', 'AuthController@login');
+    /*4*/Route::Post('edit_profile', 'AuthController@edit_profile');
+    /*5*/Route::post('change_password', 'AuthController@change_password');
+    /*6*/Route::Post('sendresetpasswordemail', 'AuthController@sendresetpasswordemail');
+    /*7*/Route::post('reset_pass/{token}','AuthController@reset_password_2');
+    /*8*/Route::post('refresh', 'AuthController@refresh');
+    /*9*/Route::post('me', 'AuthController@me');
+    /*10*/Route::Post('logout','AuthController@logout');
+    });
