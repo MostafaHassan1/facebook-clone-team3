@@ -102,7 +102,7 @@ class AuthController extends Controller
     public function edit_profile(Validate_edit_profile $request) //Commnt: can user use same mobile with 2 account
     {   // mobile team send data from database
         $all = DB::table('users')->where('phone', request('phone'))->first();
-        $user = User::find(Auth::user()->id);
+        $user =auth()->User();
         if ($all == true && ($user->phone == request('phone'))) // phone exist with other users
         {
             $user->phone = request('phone');
@@ -121,8 +121,8 @@ class AuthController extends Controller
     */
     public function change_password(Validate_change_password $request) //Comment:NESMA-SARA$$$
     {
-        if (Hash::check(request('password'), Auth::User()->password)) {
-            $user = User::find(Auth::User()->id);
+        if (Hash::check(request('password'), /*Auth::User()*/$request->password)) {
+            $user = auth()->User();  //User::find(Auth::User()->id);
             $user->password = request('new_pass');
             $user->save();
             return response()->json(["success" => "Password Changed Successfully"], 200);
