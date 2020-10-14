@@ -20,6 +20,7 @@ class Validate_edit_profile extends FormRequest
             'lastname' => 'required|min:3|max:20|alpha',
             'phone' => 'required|numeric|regex:/(01)[0-9]{9}/', // must be unique if other users use it
             'birthdate' => 'required|date',     //YYYY/MM/DD
+            //token
         ];
     }
 }
