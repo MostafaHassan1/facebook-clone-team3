@@ -130,6 +130,7 @@ class AuthController extends Controller
             return response()->json(["error" => "old password is not correct"], 400);
         }
     }
+    
 
     protected function respondWithToken($token)
     {
