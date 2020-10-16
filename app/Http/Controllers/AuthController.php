@@ -2,12 +2,12 @@
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Validate_signup;
+use App\Http\Requests\CreateSign_UpRequest;
 use App\Http\Requests\Validate_Login;
 use App\Http\Requests\CreateValidate_ChangePassRequest;
 use App\Http\Requests\Validate_reset;
-use App\Http\Requests\Validate_edit_profile;
-use App\Mail\verify;
+use App\Http\Requests\CreateEdit_profileRequest;
+use App\Mail\verifyEmail;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,17 +22,42 @@ class AuthController extends Controller
     {
         $this->middleware(
             'auth:api',
-            ['except' => ['login', 'signin', 'verifyUser', 'reset_password', 'reset_password_2']]
+            ['except' => ['login', 'signin', 'verifyUser', 'sendresetpasswordemail', 'confirm_pin','resetpassword']]
         );
     }
 
-    public function signin(Validate_signup $request)
+    public function signin(CreateSign_UpRequest $request)
     {
-        $new_code = Str::random(50);
-        User::create(array_merge(request()->all(), ['vcode' => $new_code]));
-        $user = User::where('email',$request->email)->first();
-        Mail::to( $user->email )->send(new Verify($user));
-        return response()->json(['success'=>"Check your email inbox for verification link"], 200);
+        $vcode = Str::random(70);
+        //dd($vcode);
+        $validate = $request->validate(
+            [
+                'firstname' => 'string',
+                'lastname' => 'string',
+                'email' => 'string',
+                'password' => 'string',
+                'gender' => 'boolean', //1=>female & 0=>male
+                'birthdate' => 'date',
+                'phone' => 'string', //new row
+
+            ]
+        );
+        $user = User::create(
+            [
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'password' => $request->password,
+                'email' => $request->email,
+                'gender' => $request->gender,
+                'birthdate' => $request->birthdate,
+                'vcode' => $vcode,
+                'phone' => $request->phone,
+            ]
+        );
+
+        Mail::to($user)->send(new verifyEmail($user->firstname, $vcode));
+
+        return response()->json(['message' => 'Successfully sign up ,Look at your email inbox'], 201);
     }
 
     public function verifyUser($verification_code)
@@ -65,37 +90,28 @@ class AuthController extends Controller
         }
     }
 
-    public function edit_profile(Validate_edit_profile $request)
+    public function me()
     {
-        //$anyuser = DB::table('users')->where('phone',request('phone'))->first();
-        $user = User::find(Auth::user()->id);   ///////////
-        /*
-            1.request data
-            2.validate data from request
-            3.validate from user own his phone  // ready validation in laravel [][][][][]
-            4.accept and edit profile and save
-        */
-       // if ($anyuser == true && ($user->phone == request('phone') )) /////////////
-        {
-            $user->phone = request('phone');
-            $user->firstname = request('firstname');
-            $user->lastname = request('lastname');
-            $user->birthdate = request('birthdate');
-            $user->save();
-            return response()->json(['success' => 'Profile Successfully Updated :) '], 200);
-        }
-        /*
+        return response()->json($this->guard()->user());
+    }
+
+    public function logout()
+    {
+        $this->guard()->logout();
+        return response()->json(['success' => 'Successfully logged out'], 200);
+    }
+
+    public function refresh()
+    {
+        return $this->respondWithToken($this->guard()->refresh());
+    }
+
+    /*
         User can Edit profile details
         I can update my profile info  Name Phone Birthday
         i think mobile send old data in field and user choice to edit or not
     */
-
-        /*else
-         {
-            return response()->json(['error' => 'this phone used with other users'], 401);
-        }
-        */
-    }
+   
 
      /* User can change password only when login and get token
        Other Notes:: user can change to same password
@@ -126,6 +142,22 @@ class AuthController extends Controller
             'expires_in' => $this->guard()->factory()->getTTL() * 60
         ]);
     }
+
+    public function guard()
+    {
+        return Auth::guard();
+    }
+
+    /*
+        I can reset my password if forgetten by providing my email
+
+        When: I provide a not valide email format
+        then:  Show error msg that says "This is not a valid email"
+
+        When: navigate to my email and try to set my new password
+        then: the password must be more than 8 character ,
+        else show an error msg "Password can't be less than 8 characters"
+    */
 
     public function sendresetpasswordemail(Request $request)
     {
@@ -190,35 +222,20 @@ class AuthController extends Controller
         }
     }
 
-    public function me()
+    /////////////////////// Edit Profile///////////////////////
+    public function edit_profile(CreateEdit_profileRequest $request) //Commnt: can user use same mobile with 2 account
     {
-        return response()->json($this->guard()->user());
-    }
+        //DB::table('users')->where('phone', request('phone'))->first();
+        $user = auth()->User();
+         //mosh mi7taga if because user already loged in
+            $user->firstname = $request->firstname;
+            $user->lastname = $request->lastname;
+            $user->phone = $request->phone;
+            $user->birthdate = $request->birthdate;
+            $user->save();
 
-    public function logout()
-    {
-        $this->guard()->logout();
-        return response()->json(['success' => 'Successfully logged out'], 200);
+            return response()->json(['success' => 'Your profile updated successfully'], 200);
+       
     }
-
-    public function refresh()
-    {
-        return $this->respondWithToken($this->guard()->refresh());
-    }
-
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => $this->guard()->factory()->getTTL() * 60
-        ]);
-    }
-
-    public function guard()
-    {
-        return Auth::guard();
-    }
-
-    
+    ///////////////////////End Edit Profile///////////////////////
 }
