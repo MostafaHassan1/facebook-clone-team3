@@ -22,7 +22,7 @@ class AuthController extends Controller
     {
         $this->middleware(
             'auth:api',
-            ['except' => ['login', 'signin', 'verifyUser', 'reset_password', 'reset_password_2']]
+            ['except' => ['login', 'signin', 'verifyUser', 'sendresetpasswordemail', 'confirm_pin','resetpassword']]
         );
     }
 
@@ -160,7 +160,7 @@ class AuthController extends Controller
     {
         $user = DB::table('users')->where('email', $request->email)->first();
         if ($user) {
-            $token = mt_rand(000000, 999999);
+            $token = mt_rand(100000, 999999);
             DB::table('password_resets')->insert([
                 'email' => $request->email,
                 'token' => $token,
