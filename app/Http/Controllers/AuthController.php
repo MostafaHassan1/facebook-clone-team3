@@ -232,4 +232,21 @@ class AuthController extends Controller
             return response()->json(["error" => "Pin is not valid"], 422);
         }
     }
+
+    /////////////////////// Edit Profile///////////////////////
+    public function edit_profile(Createedit_profileRequest $request) //Commnt: can user use same mobile with 2 account
+    {
+        //DB::table('users')->where('phone', request('phone'))->first();
+        $user = auth()->User();
+         //mosh mi7taga if because user already loged in
+            $user->firstname = $request->firstname;
+            $user->lastname = $request->lastname;
+            $user->phone = $request->phone;
+            $user->birthdate = $request->birthdate;
+            $user->save();
+
+            return response()->json(['success' => 'Your profile updated successfully'], 200);
+       
+    }
+    ///////////////////////End Edit Profile///////////////////////
 }
