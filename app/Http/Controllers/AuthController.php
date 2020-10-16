@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Validate_signup;
 use App\Http\Requests\Validate_Login;
-use App\Http\Requests\Validate_change_password;
+use App\Http\Requests\CreateValidate_ChangePassRequest;
+use App\Http\Requests\Validate_reset;
 use App\Http\Requests\Validate_edit_profile;
 use App\Mail\verify;
 use App\User;
@@ -99,19 +100,31 @@ class AuthController extends Controller
      /* User can change password only when login and get token
        Other Notes:: user can change to same password
     */
-    public function change_password(Validate_change_password $request)
-    {
-        if (Hash::check(request('password'), Auth::User()->password))
-         {
-             // new if with new_pass != current pass ????
-            $user = User::find(Auth::User()->id); //$$$$ready validation found in laravel documintation
-            $user->password = request('new_pass');
-            $user->save();
-            return response()->json(["success" => "Password Changed Successfully"], 200);
-         } else
-         {
-            return response()->json(["error" => "old password is not correct"], 400);
+     /////////////////////// Change Password ///////////////////////
+
+     public function changepassword(CreateValidate_ChangePassRequest $request)
+     {
+         $user = auth()->User();
+         if (!$user) {
+             return response()->json(["error" => "old password is not correct"], 406); // 406 is not acceptable
+         } else if ($request->old_password == $request->password) {
+             return response()->json(["error" => "Old password is same as new password"], 400); // 200 ok
+         } else {
+             $user->password = $request->new_password;
+             $user->save();
+             return response()->json(["success" => "Password Changed Successfully"], 200); // 200 ok
          }
+     }
+     /////////////////////// End Change Password ///////////////////////
+    
+
+    protected function respondWithToken($token)
+    {
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => $this->guard()->factory()->getTTL() * 60
+        ]);
     }
 
     public function sendresetpasswordemail(Request $request)
@@ -139,6 +152,10 @@ class AuthController extends Controller
 
             return response()->json(['success' => 'Check your email inbox for pin '], 200);
 
+        }
+        else
+        {
+            return response()->json(['success' => 'Check your email inbox for pin '], 200);
         }
     }
 
@@ -203,4 +220,5 @@ class AuthController extends Controller
         return Auth::guard();
     }
 
+    
 }
