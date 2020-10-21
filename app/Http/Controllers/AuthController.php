@@ -5,14 +5,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSign_UpRequest;
 use App\Http\Requests\Validate_Login;
 use App\Http\Requests\CreateValidate_ChangePassRequest;
-use App\Http\Requests\Validate_reset;
 use App\Http\Requests\CreateEdit_profileRequest;
 use App\Mail\verifyEmail;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 

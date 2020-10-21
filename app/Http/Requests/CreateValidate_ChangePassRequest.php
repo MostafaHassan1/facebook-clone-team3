@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class Validate_change_password extends FormRequest
+class CreateValidate_ChangePassRequest extends FormRequest
 {
 
     public function authorize()
